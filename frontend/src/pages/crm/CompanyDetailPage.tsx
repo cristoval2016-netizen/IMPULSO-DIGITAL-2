@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api } from "../../api";
+import { api, ApiError } from "../../api";
 import { useAuth } from "../../auth";
 import { label, type CompanyDetail, type InteractionType, type PackageCode, type Project, type Stage, type User } from "../../types";
 
@@ -21,6 +22,7 @@ export default function CompanyDetailPage() {
 
   // Modales
   const [showClientModal, setShowClientModal] = useState<{ email: string; full_name: string; password: string } | null>(null);
+  const [clientExistsNotice, setClientExistsNotice] = useState<string | null>(null);
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [newProject, setNewProject] = useState({ title: "", package: "impulso_integral" as PackageCode, staging_url: "", progress_percent: 50 });
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -59,7 +61,12 @@ export default function CompanyDetailPage() {
       setSuccessMsg(`¡Acceso generado! Credenciales creadas para ${showClientModal.email}.`);
       setShowClientModal(null);
     } catch (err) {
-      setError((err as Error).message);
+      if (err instanceof ApiError && err.status === 409) {
+        setShowClientModal(null);
+        setClientExistsNotice(showClientModal.email);
+      } else {
+        setError((err as Error).message);
+      }
     } finally {
       setBusy(false);
     }
@@ -457,6 +464,48 @@ export default function CompanyDetailPage() {
           </form>
         </div>
       )}
+
+      {clientExistsNotice &&
+        createPortal(
+          <div className="modal-backdrop">
+            <section
+              className="card client-exists-modal"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="client-exists-title"
+              aria-describedby="client-exists-message"
+            >
+              <button
+                type="button"
+                className="client-exists-close"
+                aria-label="Cerrar aviso"
+                onClick={() => setClientExistsNotice(null)}
+              >
+                ×
+              </button>
+              <div className="client-exists-content">
+                <span className="client-exists-icon" aria-hidden="true">i</span>
+                <div>
+                  <h2 id="client-exists-title">Acceso ya creado</h2>
+                  <p id="client-exists-message">
+                    El usuario <strong>{clientExistsNotice}</strong> ya se encuentra creado en nuestra base de datos.
+                  </p>
+                </div>
+              </div>
+              <div className="client-exists-actions">
+                <button
+                  type="button"
+                  className="btn primary"
+                  autoFocus
+                  onClick={() => setClientExistsNotice(null)}
+                >
+                  Entendido
+                </button>
+              </div>
+            </section>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

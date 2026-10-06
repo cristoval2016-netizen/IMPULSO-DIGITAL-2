@@ -144,3 +144,40 @@ def test_ml_export_has_no_personal_data(client, submission, admin_headers):
     text = r.text
     assert "converted" in text.splitlines()[0]
     assert "ana@pyme.co" not in text and "Ana Pérez" not in text and "900123456" not in text
+
+
+def test_guapicoco_demo_seed_fills_421_palms_and_is_idempotent(client):
+    seeded = client.post("/api/guapicoco/seed-demo")
+    assert seeded.status_code == 200
+    assert seeded.json()["palms_created"] == 421
+
+    palms = client.get("/api/guapicoco/palms").json()
+    stats = client.get("/api/guapicoco/stats").json()
+    assert len(palms) == stats["total_palms"] == 421
+    assert sorted(stats["lots_summary"].values()) == [105, 105, 105, 106]
+    assert stats["palms_density_per_ha"] == 105.2
+
+    repeated = client.post("/api/guapicoco/seed-demo")
+    assert repeated.json()["palms_created"] == 0
+    assert repeated.json()["total"] == 421
+
+
+def test_guapicoco_palm_photo_is_saved_and_retrievable(client):
+    import base64
+
+    image_data = b"\xff\xd8\xfftest-photo"
+    payload = {
+        "code": "GC-FOTO-001",
+        "lot": "Lote 1 (Norte)",
+        "latitude": 5.975,
+        "longitude": -74.585,
+        "photo_data_url": f"data:image/jpeg;base64,{base64.b64encode(image_data).decode()}",
+    }
+    created = client.post("/api/guapicoco/palms", json=payload)
+    assert created.status_code == 201, created.text
+
+    photo = client.get(f"/api/guapicoco/palms/{created.json()['id']}/photo")
+    assert photo.status_code == 200
+    assert photo.headers["content-type"] == "image/jpeg"
+    assert photo.content == image_data
+    assert "photo_data_url" not in created.json()

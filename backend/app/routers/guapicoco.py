@@ -8,12 +8,15 @@ Funcionalidades:
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import enum
 from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
+from fastapi.responses import Response
 from sqlalchemy import (
     Boolean,
     Column,
@@ -22,6 +25,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     func,
@@ -85,6 +89,22 @@ class CoconutPalm(Base):
     harvest_logs: Mapped[list["PalmHarvestLog"]] = relationship(
         "PalmHarvestLog", back_populates="palm", cascade="all, delete-orphan", order_by="desc(PalmHarvestLog.harvest_date)"
     )
+    photo: Mapped["CoconutPalmPhoto | None"] = relationship(
+        "CoconutPalmPhoto", back_populates="palm", cascade="all, delete-orphan", uselist=False
+    )
+
+
+class CoconutPalmPhoto(Base):
+    __tablename__ = "guapicoco_palm_photos"
+
+    palm_id: Mapped[int] = mapped_column(
+        ForeignKey("guapicoco_palms.id", ondelete="CASCADE"), primary_key=True
+    )
+    content_type: Mapped[str] = mapped_column(String(32), default="image/jpeg")
+    image_data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    palm: Mapped[CoconutPalm] = relationship("CoconutPalm", back_populates="photo")
 
 
 class PalmHarvestLog(Base):
@@ -198,6 +218,7 @@ class PalmIn(BaseModel):
     annual_coconuts_count: int = Field(75, ge=0)
     active_bunches: int = Field(6, ge=0)
     symptoms: str = "Follaje verde vigoroso, sin anomalías"
+    photo_data_url: str | None = Field(default=None, max_length=2_000_040)
 
 
 class PalmUpdateIn(BaseModel):
@@ -286,12 +307,37 @@ def list_palms(
     return list(db.scalars(stmt).all())
 
 
+def _decode_palm_photo(data_url: str | None) -> bytes | None:
+    if data_url is None:
+        return None
+    prefix = "data:image/jpeg;base64,"
+    if not data_url.startswith(prefix):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "La foto debe estar en formato JPEG")
+    try:
+        image_data = base64.b64decode(data_url[len(prefix):], validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "La foto no tiene un formato válido") from exc
+    if not image_data.startswith(b"\xff\xd8\xff"):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "El archivo no contiene una imagen JPEG válida")
+    if len(image_data) > 1_500_000:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "La foto supera el tamaño máximo de 1.5 MB")
+    return image_data
+
+
 @router.get("/palms/{palm_id}", response_model=PalmOut)
 def get_palm(palm_id: int, db: Session = Depends(get_db)) -> CoconutPalm:
     palm = db.get(CoconutPalm, palm_id)
     if not palm:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Palma no encontrada")
     return palm
+
+
+@router.get("/palms/{palm_id}/photo")
+def get_palm_photo(palm_id: int, db: Session = Depends(get_db)) -> Response:
+    photo = db.get(CoconutPalmPhoto, palm_id)
+    if not photo:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "La palma no tiene una foto registrada")
+    return Response(content=photo.image_data, media_type=photo.content_type)
 
 
 @router.post("/palms", response_model=PalmOut, status_code=status.HTTP_201_CREATED)
@@ -306,6 +352,7 @@ def create_palm(data: PalmIn, db: Session = Depends(get_db)) -> CoconutPalm:
     health_status, diag, treat = analyze_palm_health(
         data.last_coconuts_count, data.annual_coconuts_count, data.symptoms
     )
+    photo_data = _decode_palm_photo(data.photo_data_url)
 
     palm = CoconutPalm(
         code=data.code,
@@ -323,6 +370,8 @@ def create_palm(data: PalmIn, db: Session = Depends(get_db)) -> CoconutPalm:
         treatment_plan=treat,
         last_inspected_at=utcnow(),
     )
+    if photo_data:
+        palm.photo = CoconutPalmPhoto(content_type="image/jpeg", image_data=photo_data)
     db.add(palm)
     db.commit()
     db.refresh(palm)
@@ -432,9 +481,11 @@ def get_farm_stats(db: Session = Depends(get_db)) -> FarmStatsOut:
 
 @router.post("/seed-demo")
 def seed_demo_farm(db: Session = Depends(get_db)):
-    """Inicializa la finca de 4 hectáreas con un conjunto representativo de 40 palmas georreferenciadas."""
-    if db.scalar(select(CoconutPalm).limit(1)):
-        return {"message": "La finca ya contiene palmas censadas", "total": db.scalar(select(func.count(CoconutPalm.id)))}
+    """Completa el censo de demostración hasta 421 palmas sin reemplazar datos existentes."""
+    target_total = 421
+    existing_total = db.scalar(select(func.count(CoconutPalm.id))) or 0
+    if existing_total >= target_total:
+        return {"message": "El censo ya está completo", "total": existing_total, "palms_created": 0}
 
     # Centro de la finca en Puerto Boyacá (Finca Guapi Coco - 4 Hectáreas: ~200m x 200m)
     # 1 grado de latitud ~= 111,111 m -> 100m ~= 0.0009 grados
@@ -448,52 +499,95 @@ def seed_demo_farm(db: Session = Depends(get_db)):
         ("Lote 4 (Occidente)", -0.0004, 0.0004),
     ]
 
+    existing_palms = list(db.scalars(select(CoconutPalm)).all())
+    lot_counts: dict[str, int] = {}
+    lot_positions: dict[str, list[tuple[float, float]]] = {}
+    for palm in existing_palms:
+        lot_counts[palm.lot] = lot_counts.get(palm.lot, 0) + 1
+        lot_positions.setdefault(palm.lot, []).append((palm.latitude, palm.longitude))
+    existing_codes = {palm.code for palm in existing_palms}
+    candidate_positions = {
+        lot_name: [
+            (
+                center_lat + d_lat + (row - 6) * 0.000065,
+                center_lon + d_lon + (column - 6) * 0.000065,
+            )
+            for row in range(13)
+            for column in range(13)
+        ]
+        for lot_name, d_lat, d_lon in lots
+    }
+    candidate_indices = {lot_name: 0 for lot_name, _, _ in lots}
+    min_spacing_squared = 0.000055**2
     palms_to_create: list[CoconutPalm] = []
-    palm_id = 1
+    while existing_total + len(palms_to_create) < target_total:
+        lot_index = min(
+            range(len(lots)),
+            key=lambda index: lot_counts.get(lots[index][0], 0),
+        )
+        lot_name, d_lat, d_lon = lots[lot_index]
+        position = lot_counts.get(lot_name, 0)
+        palm_number = existing_total + len(palms_to_create) + 1
 
-    for lot_name, d_lat, d_lon in lots:
-        for r in range(3):
-            for c in range(3):
-                code = f"GC-{lot_name[:2].upper()}{r+1}{c+1}-{palm_id:03d}"
-                lat = center_lat + d_lat + (r - 1) * 0.00025
-                lon = center_lon + d_lon + (c - 1) * 0.00025
+        code_number = position + 1
+        code = f"GC-L{lot_index + 1}-{code_number:03d}"
+        while code in existing_codes:
+            code_number += 1
+            code = f"GC-L{lot_index + 1}-{code_number:03d}"
+        existing_codes.add(code)
 
-                # Distribuir algunos casos de salud para demostración realista
-                if palm_id in (5, 14, 22):
-                    last_coconuts = 6
-                    annual = 35
-                    symptoms = "Clorosis foliar moderada en hojas bajeras y presencia de perforación de picudo negro"
-                elif palm_id in (8, 29):
-                    last_coconuts = 1
-                    annual = 8
-                    symptoms = "Necrosis apical severa, flecha colapsada y pudrición de cogollo evidente"
-                else:
-                    last_coconuts = 14 + (palm_id % 7)
-                    annual = 70 + (palm_id % 25)
-                    symptoms = "Follaje verde vigoroso, racimos cargados y excelente desarrollo foliar"
+        positions = lot_positions.setdefault(lot_name, [])
+        candidates = candidate_positions[lot_name]
+        for candidate_index in range(candidate_indices[lot_name], len(candidates)):
+            candidate_indices[lot_name] = candidate_index + 1
+            lat, lon = candidates[candidate_index]
+            if all(
+                (lat - existing_lat) ** 2 + (lon - existing_lon) ** 2 >= min_spacing_squared
+                for existing_lat, existing_lon in positions
+            ):
+                break
+        else:
+            raise HTTPException(status.HTTP_409_CONFLICT, f"No hay espacio para ubicar más palmas en {lot_name}")
 
-                health_status, diag, treat = analyze_palm_health(last_coconuts, annual, symptoms)
+        if palm_number in (5, 14, 22):
+            last_coconuts = 6
+            annual = 35
+            symptoms = "Clorosis foliar moderada en hojas bajeras y presencia de perforación de picudo negro"
+        elif palm_number in (8, 29):
+            last_coconuts = 1
+            annual = 8
+            symptoms = "Necrosis apical severa, flecha colapsada y pudrición de cogollo evidente"
+        else:
+            last_coconuts = 14 + (palm_number % 7)
+            annual = 70 + (palm_number % 25)
+            symptoms = "Follaje verde vigoroso, racimos cargados y excelente desarrollo foliar"
 
-                palms_to_create.append(
-                    CoconutPalm(
-                        code=code,
-                        lot=lot_name,
-                        latitude=round(lat, 6),
-                        longitude=round(lon, 6),
-                        variety="alto_pacifico" if palm_id % 2 == 0 else "hibrido_pb121",
-                        planted_year=2018 + (palm_id % 4),
-                        last_coconuts_count=last_coconuts,
-                        annual_coconuts_count=annual,
-                        active_bunches=max(2, last_coconuts // 2),
-                        health_status=health_status,
-                        symptoms=symptoms,
-                        diagnostic_details=diag,
-                        treatment_plan=treat,
-                        last_inspected_at=utcnow(),
-                    )
-                )
-                palm_id += 1
+        health_status, diag, treat = analyze_palm_health(last_coconuts, annual, symptoms)
+        palms_to_create.append(
+            CoconutPalm(
+                code=code,
+                lot=lot_name,
+                latitude=round(lat, 6),
+                longitude=round(lon, 6),
+                variety="alto_pacifico" if palm_number % 2 == 0 else "hibrido_pb121",
+                planted_year=2018 + (palm_number % 4),
+                last_coconuts_count=last_coconuts,
+                annual_coconuts_count=annual,
+                active_bunches=max(2, last_coconuts // 2),
+                health_status=health_status,
+                symptoms=symptoms,
+                diagnostic_details=diag,
+                treatment_plan=treat,
+                last_inspected_at=utcnow(),
+            )
+        )
+        lot_counts[lot_name] = position + 1
+        positions.append((lat, lon))
 
     db.add_all(palms_to_create)
     db.commit()
-    return {"message": "Finca Guapi Coco de 4 Hectáreas poblada exitosamente", "palms_created": len(palms_to_create)}
+    return {
+        "message": "Censo de Guapi Coco completado",
+        "palms_created": len(palms_to_create),
+        "total": existing_total + len(palms_to_create),
+    }

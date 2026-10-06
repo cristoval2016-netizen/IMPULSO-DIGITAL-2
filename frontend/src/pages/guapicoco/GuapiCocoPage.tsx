@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api";
 
@@ -70,6 +70,7 @@ export default function GuapiCocoPage() {
 
   // Palma seleccionada para inspección
   const [selectedPalm, setSelectedPalm] = useState<Palm | null>(null);
+  const [selectedPalmPhoto, setSelectedPalmPhoto] = useState<string | null>(null);
 
   // Pestaña activa (mapa, censo, registrar, recomendaciones)
   const [activeTab, setActiveTab] = useState<"mapa" | "tabla" | "nueva" | "recomendaciones">("mapa");
@@ -78,6 +79,9 @@ export default function GuapiCocoPage() {
   const [gpsLoading, setGpsLoading] = useState(false);
   const [gpsError, setGpsError] = useState("");
   const [currentGps, setCurrentGps] = useState<{ lat: number; lon: number; accuracy: number } | null>(null);
+  const [palmPhoto, setPalmPhoto] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState("");
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Formulario para registrar nueva palma
   const [newPalm, setNewPalm] = useState({
@@ -120,6 +124,27 @@ export default function GuapiCocoPage() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    let photoUrl: string | null = null;
+    let cancelled = false;
+    setSelectedPalmPhoto(null);
+    if (selectedPalm) {
+      fetch(`/api/guapicoco/palms/${selectedPalm.id}/photo`)
+        .then((response) => response.ok ? response.blob() : null)
+        .then((photo) => {
+          if (photo && !cancelled) {
+            photoUrl = URL.createObjectURL(photo);
+            setSelectedPalmPhoto(photoUrl);
+          }
+        })
+        .catch(() => {});
+    }
+    return () => {
+      cancelled = true;
+      if (photoUrl) URL.revokeObjectURL(photoUrl);
+    };
+  }, [selectedPalm?.id]);
+
   // Función para capturar coordenadas GPS del dispositivo del trabajador
   const captureGps = () => {
     if (!navigator.geolocation) {
@@ -149,6 +174,45 @@ export default function GuapiCocoPage() {
     );
   };
 
+  const handlePalmPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = "";
+    setPhotoError("");
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Selecciona un archivo de imagen válido.");
+      return;
+    }
+    if (file.size > 15_000_000) {
+      setPhotoError("La foto original no puede superar 15 MB.");
+      return;
+    }
+
+    const sourceUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = sourceUrl;
+      await image.decode();
+      const scale = Math.min(1, 1280 / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(image.naturalWidth * scale);
+      canvas.height = Math.round(image.naturalHeight * scale);
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("No se pudo procesar la fotografía.");
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const compressedPhoto = canvas.toDataURL("image/jpeg", 0.78);
+      if (compressedPhoto.length > 2_000_000) {
+        throw new Error("La foto comprimida supera el tamaño máximo permitido.");
+      }
+      setPalmPhoto(compressedPhoto);
+    } catch (err) {
+      setPhotoError((err as Error).message || "No se pudo procesar la fotografía.");
+    } finally {
+      URL.revokeObjectURL(sourceUrl);
+    }
+  };
+
   // Filtrado de palmas
   const filteredPalms = useMemo(() => {
     return palms.filter((p) => {
@@ -169,7 +233,7 @@ export default function GuapiCocoPage() {
     try {
       const created = await api<Palm>("/api/guapicoco/palms", {
         method: "POST",
-        body: JSON.stringify(newPalm),
+        body: JSON.stringify({ ...newPalm, photo_data_url: palmPhoto }),
       });
       setSuccessMsg(`¡Palma ${created.code} registrada y georreferenciada exitosamente!`);
       setTimeout(() => setSuccessMsg(""), 5000);
@@ -187,6 +251,8 @@ export default function GuapiCocoPage() {
       });
       await loadData();
       setSelectedPalm(created);
+      setPalmPhoto(null);
+      setPhotoError("");
       setActiveTab("mapa");
     } catch (err: any) {
       setError(err.message || "Error al registrar la palma");
@@ -562,6 +628,7 @@ export default function GuapiCocoPage() {
                     key={p.id}
                     onClick={() => setSelectedPalm(p)}
                     title={`${p.code} · ${p.lot} · ${meta.label} (${p.last_coconuts_count} cocos)`}
+                    className={`guapi-palm-marker${isSelected ? " selected" : ""}`}
                     style={{
                       position: "absolute",
                       left: `${coords.x}%`,
@@ -574,8 +641,6 @@ export default function GuapiCocoPage() {
                   >
                     <div
                       style={{
-                        width: isSelected ? 32 : 24,
-                        height: isSelected ? 32 : 24,
                         borderRadius: "50%",
                         backgroundColor: meta.color,
                         border: isSelected ? "3px solid #fff" : "2px solid rgba(0,0,0,0.4)",
@@ -585,7 +650,6 @@ export default function GuapiCocoPage() {
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontSize: isSelected ? "1rem" : "0.75rem",
                         color: "#fff",
                         fontWeight: 700,
                       }}
@@ -694,6 +758,14 @@ export default function GuapiCocoPage() {
                   Inspección: {new Date(selectedPalm.last_inspected_at).toLocaleDateString("es-CO")}
                 </span>
               </div>
+
+              {selectedPalmPhoto && (
+                <img
+                  className="palm-detail-photo"
+                  src={selectedPalmPhoto}
+                  alt={`Fotografía de la palma ${selectedPalm.code}`}
+                />
+              )}
 
               {/* Coordenadas GPS */}
               <div style={{ backgroundColor: "#f9fafb", padding: ".75rem", borderRadius: 8, marginBottom: "1rem", fontSize: "0.85rem" }}>
@@ -923,6 +995,39 @@ export default function GuapiCocoPage() {
                 </button>
               </div>
               {gpsError && <div style={{ color: "#dc2626", fontSize: "0.8rem", marginTop: ".5rem" }}>{gpsError}</div>}
+            </div>
+
+            <div className="palm-photo-capture">
+              <div className="palm-photo-heading">
+                <div>
+                  <strong>📷 Fotografía de la palma</strong>
+                  <p>Toma una foto para adjuntarla al registro.</p>
+                </div>
+                <input
+                  ref={photoInputRef}
+                  className="palm-photo-input"
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePalmPhoto}
+                />
+                <button
+                  type="button"
+                  className="btn primary palm-photo-button"
+                  onClick={() => photoInputRef.current?.click()}
+                >
+                  {palmPhoto ? "Tomar otra foto" : "Tomar foto"}
+                </button>
+              </div>
+              {photoError && <p className="palm-photo-error" role="alert">{photoError}</p>}
+              {palmPhoto && (
+                <div className="palm-photo-preview-wrap">
+                  <img className="palm-photo-preview" src={palmPhoto} alt="Vista previa de la palma" />
+                  <button type="button" className="btn ghost small" onClick={() => setPalmPhoto(null)}>
+                    Quitar foto
+                  </button>
+                </div>
+              )}
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>

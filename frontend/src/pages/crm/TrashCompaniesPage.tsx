@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { api } from "../../api";
 import { useAuth } from "../../auth";
@@ -280,110 +281,133 @@ export default function TrashCompaniesPage() {
 
       {/* MODAL 1: Restaurar Empresa (Pregunta el motivo de la restauración) */}
       {restoringCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <span className="text-emerald-600">♻️</span> Restaurar Empresa al CRM Activo
-                </h3>
-                <p className="text-xs text-slate-500">Empresa: {restoringCompany.name}</p>
-              </div>
-              <button onClick={() => setRestoringCompany(null)} className="text-slate-400 hover:text-slate-600 text-lg">
-                ✕
-              </button>
-            </div>
-
-            <div className="p-3.5 bg-emerald-50 rounded-xl border border-emerald-200 text-xs text-emerald-900 space-y-1">
-              <div className="font-bold flex items-center gap-1.5">
-                <span>✓</span> Todo el historial será reactivado:
-              </div>
-              <p>
-                La empresa volverá a aparecer en el listado activo de empresas y en el pipeline comercial con sus {restoringCompany.diagnostics_count} diagnósticos, {restoringCompany.interactions_count} notas/llamadas y {restoringCompany.contacts_count} contactos.
-              </p>
-            </div>
-
-            <form onSubmit={handleConfirmRestore} className="space-y-4">
-              <div>
-                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider block mb-1">
-                  Motivo de la Restauración: *
-                </label>
-                <textarea
-                  required
-                  rows={3}
-                  value={restoreReason}
-                  onChange={(e) => setRestoreReason(e.target.value)}
-                  placeholder="Escriba aquí la justificación de la recuperación (ej. Cliente reanudó operaciones, solicitud formal de la Pyme, corrección de baja errónea...)"
-                  className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                />
-                <span className="text-[11px] text-slate-400 mt-1 block">
-                  Este motivo quedará registrado de forma inmutable en el historial de interacciones y en la auditoría del sistema.
-                </span>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t">
+        createPortal(
+          <div className="trash-modal-overlay">
+            <section
+              className="trash-modal trash-modal-restore"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="restore-modal-title"
+              aria-describedby="restore-modal-summary"
+            >
+              <div className="trash-modal-heading">
+                <span className="trash-modal-icon trash-modal-icon-success" aria-hidden="true">↶</span>
+                <div>
+                  <h2 id="restore-modal-title">Recuperar empresa</h2>
+                  <p className="trash-modal-company">{restoringCompany.name}</p>
+                </div>
                 <button
                   type="button"
+                  className="trash-modal-close"
+                  aria-label="Cerrar recuperación"
+                  disabled={submittingRestore}
                   onClick={() => setRestoringCompany(null)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
                 >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={submittingRestore || !restoreReason.trim()}
-                  className="px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {submittingRestore ? "Restaurando..." : "Confirmar y Recuperar Empresa"}
+                  ×
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
+
+              <div className="trash-modal-description trash-modal-description-success" id="restore-modal-summary">
+                <strong>Se reactivará el historial:</strong> {restoringCompany.diagnostics_count} diagnósticos, {restoringCompany.interactions_count} notas o llamadas y {restoringCompany.contacts_count} contactos.
+              </div>
+
+              <form onSubmit={handleConfirmRestore} className="restore-modal-form">
+                <label className="restore-modal-label" htmlFor="restore-reason">
+                  Motivo de la recuperación <span aria-hidden="true">*</span>
+                  <textarea
+                    id="restore-reason"
+                    required
+                    rows={3}
+                    value={restoreReason}
+                    onChange={(e) => setRestoreReason(e.target.value)}
+                    placeholder="Indica por qué se recupera esta empresa."
+                    className="restore-modal-textarea"
+                  />
+                </label>
+                <p className="restore-modal-hint">
+                  El motivo quedará registrado en el historial de interacciones y en la auditoría.
+                </p>
+
+                <div className="trash-modal-actions">
+                  <button
+                    type="button"
+                    className="trash-modal-button trash-modal-button-cancel"
+                    autoFocus
+                    disabled={submittingRestore}
+                    onClick={() => setRestoringCompany(null)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    className="trash-modal-button trash-modal-button-success"
+                    disabled={submittingRestore || !restoreReason.trim()}
+                  >
+                    {submittingRestore ? "Recuperando..." : "Confirmar recuperación"}
+                  </button>
+                </div>
+              </form>
+            </section>
+          </div>,
+          document.body
+        )
       )}
 
       {/* MODAL 2: Purga Definitiva (Advertencia de Seguridad) */}
       {purgingCompany && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b pb-3">
-              <div>
-                <h3 className="text-lg font-bold text-red-600 flex items-center gap-2">
-                  <span>⚠️</span> Eliminación Física Definitiva
-                </h3>
-                <p className="text-xs text-slate-500">{purgingCompany.name}</p>
+        createPortal(
+          <div className="trash-modal-overlay">
+            <section
+              className="trash-modal trash-modal-purge"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="purge-modal-title"
+              aria-describedby="purge-modal-description"
+            >
+              <div className="trash-modal-heading">
+                <span className="trash-modal-icon trash-modal-icon-danger" aria-hidden="true">!</span>
+                <div>
+                  <h2 id="purge-modal-title">Confirmar purga</h2>
+                  <p className="trash-modal-company">{purgingCompany.name}</p>
+                </div>
+                <button
+                  type="button"
+                  className="trash-modal-close"
+                  aria-label="Cerrar confirmación"
+                  disabled={submittingPurge}
+                  onClick={() => setPurgingCompany(null)}
+                >
+                  ×
+                </button>
               </div>
-              <button onClick={() => setPurgingCompany(null)} className="text-slate-400 hover:text-slate-600 text-lg">
-                ✕
-              </button>
-            </div>
 
-            <div className="p-3.5 bg-red-50 rounded-xl border border-red-200 text-xs text-red-800 space-y-1">
-              <div className="font-bold">¡Esta acción no se puede deshacer!</div>
-              <p>
-                Se borrarán físicamente de la base de datos la empresa y todos sus diagnósticos, contactos, interacciones y proyectos (Cumplimiento de derecho al olvido según Ley 1581 de 2012).
+              <p className="trash-modal-description trash-modal-description-danger" id="purge-modal-description">
+                Esta acción es permanente. Se eliminarán la empresa y sus diagnósticos, contactos, interacciones y proyectos.
               </p>
-            </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t">
-              <button
-                type="button"
-                onClick={() => setPurgingCompany(null)}
-                className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                disabled={submittingPurge}
-                onClick={handleConfirmPurge}
-                className="px-4 py-2 text-xs font-bold bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm disabled:opacity-50"
-              >
-                {submittingPurge ? "Eliminando..." : "Sí, Eliminar Definitivamente"}
-              </button>
-            </div>
-          </div>
-        </div>
+              <div className="trash-modal-actions">
+                <button
+                  type="button"
+                  className="trash-modal-button trash-modal-button-cancel"
+                  autoFocus
+                  disabled={submittingPurge}
+                  onClick={() => setPurgingCompany(null)}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  className="trash-modal-button trash-modal-button-danger"
+                  disabled={submittingPurge}
+                  onClick={handleConfirmPurge}
+                >
+                  {submittingPurge ? "Eliminando..." : "Eliminar definitivamente"}
+                </button>
+              </div>
+            </section>
+          </div>,
+          document.body
+        )
       )}
     </div>
   );
