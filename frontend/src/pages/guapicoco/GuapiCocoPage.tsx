@@ -381,7 +381,7 @@ export default function GuapiCocoPage() {
             ← Volver a CRM
           </Link>
           <Link to="/portal" className="btn ghost" style={{ textDecoration: "none" }}>
-            Portal Cliente SGA ↗
+            Portal Cliente ↗
           </Link>
           <button onClick={exportCsv} className="btn primary" style={{ backgroundColor: "#065f46", borderColor: "#065f46" }}>
             📥 Exportar Censo CSV

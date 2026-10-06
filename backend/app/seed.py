@@ -11,7 +11,7 @@ from sqlalchemy import select
 
 from app.database import SessionLocal
 from app.main import app, init_db
-from app.models import Company, PipelineStage, User, UserRole
+from app.models import Company, Package, PipelineStage, User, UserRole
 from app.security import hash_password
 from app.services.questionnaire import QUESTIONS
 
@@ -100,8 +100,18 @@ def main() -> None:
                     d.converted, d.purchased_package = True, d.recommended_package
             db.commit()
 
-            # Módulo 2 Demo: Crear proyectos, entregables, usuario cliente y materiales de capacitación
-            from app.models import Deliverable, DeliverableStatus, Project, ProjectStatus, SupportTicket, TicketMessage, TicketPriority, TicketStatus, TrainingMaterial
+            from app.models import (
+                Deliverable,
+                DeliverableStatus,
+                Package,
+                Project,
+                ProjectStatus,
+                SupportTicket,
+                TicketMessage,
+                TicketPriority,
+                TicketStatus,
+                TrainingMaterial,
+            )
 
             # 1. Usuario cliente para la primera empresa (Panadería La Espiga)
             comp_1 = db.scalar(select(Company).order_by(Company.id).limit(1))

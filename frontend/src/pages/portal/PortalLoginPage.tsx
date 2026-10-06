@@ -35,7 +35,7 @@ export default function PortalLoginPage() {
         <div className="brand">
           Impulso<span>Digital</span>
         </div>
-        <h2>Portal del Cliente · Acceso Seguro (SGA)</h2>
+        <h2>Portal del Cliente</h2>
         <p className="muted">
           Consulte la fase de desarrollo de su proyecto, apruebe diseños y acceda a soporte y capacitaciones.
         </p>
