@@ -16,7 +16,7 @@ from app.security import hash_password
 from app.services.questionnaire import QUESTIONS
 
 COMPANIES = [
-    ("Guapi Coco", "manufactura", 18, "Puerto Boyacá"),
+    ("Panadería La Espiga", "manufactura", 18, "Puerto Boyacá"),
     ("Ferretería El Tornillo", "comercio", 15, "Puerto Boyacá"),
     ("Moda Andina SAS", "comercio", 35, "Puerto Boyacá"),
     ("Consultores Contables JM", "servicios", 6, "Puerto Boyacá"),
@@ -103,12 +103,12 @@ def main() -> None:
             # Módulo 2 Demo: Crear proyectos, entregables, usuario cliente y materiales de capacitación
             from app.models import Deliverable, DeliverableStatus, Project, ProjectStatus, SupportTicket, TicketMessage, TicketPriority, TicketStatus, TrainingMaterial
 
-            # 1. Usuario cliente para la primera empresa (Guapi Coco)
+            # 1. Usuario cliente para la primera empresa (Panadería La Espiga)
             comp_1 = db.scalar(select(Company).order_by(Company.id).limit(1))
-            if comp_1 and not db.scalar(select(User).where(User.email == "cliente@guapicoco.co")):
+            if comp_1 and not db.scalar(select(User).where(User.email == "cliente@laespiga.com")):
                 client_user = User(
-                    email="cliente@guapicoco.co",
-                    full_name="Don Efraín - Guapi Coco",
+                    email="cliente@laespiga.com",
+                    full_name="Don Efraín - Panadería La Espiga",
                     role=UserRole.CLIENTE,
                     company_id=comp_1.id,
                     hashed_password=hash_password("Cliente123*"),
@@ -119,12 +119,12 @@ def main() -> None:
                 # Proyecto en fase de desarrollo (Staging)
                 project = Project(
                     company_id=comp_1.id,
-                    title="Sistema de Georreferenciación, Censo y Fitosanidad de Palma de Coco (Finca 4 Ha)",
+                    title="Sitio Web E-commerce y Pedidos por WhatsApp",
                     package=comp_1.diagnostics[-1].recommended_package,
                     status=ProjectStatus.STAGING,
                     progress_percent=85,
-                    staging_url="/guapicoco",
-                    production_url="https://guapicoco.co",
+                    staging_url="https://laespiga.staging.impulsodigital.co",
+                    production_url="https://laespiga.co",
                 )
                 db.add(project)
                 db.flush()
@@ -133,27 +133,27 @@ def main() -> None:
                 db.add_all([
                     Deliverable(
                         project_id=project.id,
-                        title="1. Mapeo Satelital y Polígono de 4 Hectáreas (Lotes 1 a 4)",
-                        description="Georreferenciación perimetral de las 4 hectáreas con división en 4 lotes de 1 Ha.",
-                        preview_url="/guapicoco",
+                        title="1. Wireframes y Diseño UI (Figma)",
+                        description="Diseño visual de las pantallas principales incluyendo catálogo y carrito de compras.",
+                        preview_url="https://figma.com/file/demo",
                         status=DeliverableStatus.APROBADO,
-                        client_feedback="Aprobado. El mapa interactivo satelital cubre con exactitud los 4 lotes.",
+                        client_feedback="Aprobado. Los colores reflejan muy bien la identidad de la panadería.",
                     ),
                     Deliverable(
                         project_id=project.id,
-                        title="2. Módulo de Georreferenciación GPS y Registro en Vivo de Palmas",
-                        description="Captura de coordenadas GPS en tiempo real para cada palma de coco y trazado en mapa.",
-                        preview_url="/guapicoco",
+                        title="2. Desarrollo Frontend e Integración WhatsApp",
+                        description="Maquetación del sitio en React y botón flotante para enviar pedido preformateado a WhatsApp.",
+                        preview_url="https://laespiga.staging.impulsodigital.co",
                         status=DeliverableStatus.APROBADO,
-                        client_feedback="Excelente precisión para georreferenciar las palmas directamente en el terreno.",
+                        client_feedback="El botón de WhatsApp funciona perfecto desde el celular.",
                     ),
                     Deliverable(
                         project_id=project.id,
-                        title="3. Conteo de Producción y Algoritmo de Diagnóstico de Salud Fitosanitaria",
-                        description="Registro de cosecha por palma, umbrales productivos y detección de palmas sanas, enfermas o muriendo.",
-                        preview_url="/guapicoco",
-                        status=DeliverableStatus.APROBADO,
-                        client_feedback="Muy útil la alerta temprana de picudo negro y las recomendaciones agronómicas.",
+                        title="3. Configuración de Hosting y Dominio",
+                        description="Despliegue en servidores, certificado SSL y configuración del dominio laespiga.co.",
+                        preview_url="https://laespiga.staging.impulsodigital.co",
+                        status=DeliverableStatus.REVISION,
+                        client_feedback="Aún veo un error de seguridad al entrar desde algunos navegadores. Por favor revisar el SSL.",
                     ),
                 ])
 
@@ -161,8 +161,8 @@ def main() -> None:
                 ticket = SupportTicket(
                     company_id=comp_1.id,
                     created_by_id=client_user.id,
-                    subject="Calibración de precisión GPS en el Lote 3 de la finca",
-                    description="¿Cómo podemos optimizar la precisión del GPS bajo el dosel foliar denso en los lotes con palmas adultas?",
+                    subject="Problema al actualizar el catálogo de tortas",
+                    description="Intenté subir nuevas fotos para la temporada de madres, pero la página se queda cargando.",
                     priority=TicketPriority.MEDIA,
                     status=TicketStatus.EN_PROCESO,
                 )
@@ -284,7 +284,7 @@ def seed_module_3(db) -> None:
             client_approved=True,
             qa_approved=True,
             released_at=utcnow() - timedelta(days=7),
-            notes="Aprobado en kickoff con Finca Guapi Coco.",
+            notes="Aprobado en kickoff con Panadería La Espiga.",
         )
         m2 = Milestone(
             project_id=project_1.id,
@@ -316,9 +316,9 @@ def seed_module_3(db) -> None:
             project_id=project_1.id,
             milestone_id=m1.id,
             assigned_freelancer_id=freelancer_user.id,
-            title="Mapeo Satelital y Georreferenciación de 4 Hectáreas (Palmas de Coco)",
-            description="Polígono perimetral de 4 hectáreas con división en 4 lotes y marcadores GPS para palmas.",
-            deliverable_url="/guapicoco",
+            title="Diseño UI/UX (Figma)",
+            description="Creación de wireframes y diseño de alta fidelidad para el e-commerce de La Espiga.",
+            deliverable_url="https://figma.com/file/demo",
             status=TaskStatus.COMPLETADA,
             priority=TicketPriority.ALTA,
             sla_hours_allotted=48,
@@ -327,16 +327,16 @@ def seed_module_3(db) -> None:
             completed_at=now - timedelta(days=8, hours=2),
             sla_status=SLAStatus.A_TIEMPO,
             qa_score=96,
-            qa_feedback="Excelente adaptabilidad móvil y geolocalización satelital precisa.",
+            qa_feedback="Excelente adaptabilidad móvil. Los colores coinciden con el manual de marca.",
             qa_checklist={"responsive": True, "performance": True, "security": True},
         )
         t2 = FreelancerTask(
             project_id=project_1.id,
             milestone_id=m2.id,
             assigned_freelancer_id=freelancer_user.id,
-            title="Módulo de Conteo de Producción y Algoritmo de Salud Fitosanitaria",
-            description="Lógica de clasificación de palmas (sanas, enfermas, muriendo) según umbrales y síntomas.",
-            deliverable_url="/guapicoco",
+            title="Certificado SSL y Dominio",
+            description="Configuración de Let's Encrypt y DNS para laespiga.co.",
+            deliverable_url="https://laespiga.co",
             status=TaskStatus.COMPLETADA,
             priority=TicketPriority.ALTA,
             sla_hours_allotted=24,

@@ -38,7 +38,6 @@ function CrmLayout() {
           <NavLink to="/crm/empresas">Empresas</NavLink>
           <NavLink to="/crm/qa-slas">Control QA & SLAs</NavLink>
           <NavLink to="/crm/papelera">Papelera</NavLink>
-          <a href="/guapicoco" target="_blank" rel="noreferrer">Guapi Coco (4 Ha) 🌴</a>
           <a href="/portal/login" target="_blank" rel="noreferrer">Portal Cliente ↗</a>
           <a href="/freelancer" target="_blank" rel="noreferrer">Portal Freelancer ↗</a>
           <a href="/" target="_blank" rel="noreferrer">Formulario público ↗</a>
