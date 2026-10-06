@@ -71,7 +71,7 @@ def main() -> None:
             print("Datos de demostración actualizados.")
             return
 
-
+        client = TestClient(app)
         for i, (name, sector, employees, city) in enumerate(COMPANIES):
             bias = random.random()
             answers = {

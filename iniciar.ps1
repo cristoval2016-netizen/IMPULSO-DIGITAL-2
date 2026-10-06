@@ -9,10 +9,10 @@ Write-Host "  Iniciando Impulso Digital (Backend + Frontend)       " -Foreground
 Write-Host "========================================================" -ForegroundColor Cyan
 
 Write-Host "[1/2] Iniciando Backend FastAPI en http://127.0.0.1:8000 ..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$rootDir\backend'; .\ .venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000"
+Start-Process cmd.exe -ArgumentList "/k cd /d `"$rootDir\backend`" && .venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000"
 
 Write-Host "[2/2] Iniciando Frontend Vite en http://localhost:5173 ..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$env:Path = 'C:\Program Files\nodejs;' + `$env:Path; Set-Location '$rootDir\frontend'; & 'C:\Program Files\nodejs\npm.cmd' run dev"
+Start-Process cmd.exe -ArgumentList "/k set `"PATH=C:\Program Files\nodejs;%PATH%`" && cd /d `"$rootDir\frontend`" && npm.cmd run dev"
 
 Write-Host ""
 Write-Host "Servicios iniciados en ventanas separadas." -ForegroundColor Green

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guapi Coco | Coco fresco y derivados naturales de Puerto Boyacá</title>
+  <meta name="description" content="Guapi Coco: coco fresco, agua de coco, aceite virgen, leche de coco y dulces artesanales cultivados en nuestra finca de Puerto Boyacá. Pide por WhatsApp con entrega local y envíos nacionales." />
+  <meta property="og:title" content="Guapi Coco | Del palmar a tu mesa" />
+  <meta property="og:description" content="Coco fresco y derivados 100% naturales, cultivados con trazabilidad palma por palma." />
+  <meta property="og:image" content="img/hero.jpg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Barra de anuncio -->
+  <div class="announce">🥥 Envío gratis en Puerto Boyacá por compras desde $60.000 · Cosecha de esta semana disponible</div>
+
+  <!-- Navegación -->
+  <header class="nav" id="nav">
+    <div class="container nav-inner">
+      <a href="#inicio" class="logo" id="logo-link">
+        <span class="logo-mark">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="22" r="14" fill="currentColor"/><circle cx="20" cy="22" r="8.5" fill="#fff"/><path d="M20 8c3-5 9-6 13-4-3 1-6 3-8 6M20 8c-3-5-9-6-13-4 3 1 6 3 8 6" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round"/></svg>
+        </span>
+        <span>Guapi<b>Coco</b></span>
+      </a>
+      <nav class="nav-links" id="nav-links">
+        <a href="#productos">Productos</a>
+        <a href="#finca">Nuestra Finca</a>
+        <a href="#proceso">Proceso</a>
+        <a href="#mayoristas">Mayoristas</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <div class="nav-actions">
+        <button class="cart-btn" id="cart-open-btn" aria-label="Abrir carrito">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6L5 2H2"/><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/></svg>
+          <span class="cart-count" id="cart-count">0</span>
+        </button>
+        <button class="menu-btn" id="menu-btn" aria-label="Menú"><span></span><span></span></button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="inicio">
+      <div class="hero-bg" style="background-image:url('img/hero.jpg')"></div>
+      <div class="container hero-content">
+        <span class="eyebrow reveal">Finca Guapi Coco · Puerto Boyacá</span>
+        <h1 class="reveal">Del palmar<br/>a tu mesa, <em>natural</em>.</h1>
+        <p class="reveal">Coco fresco y derivados 100% naturales cosechados en nuestras 4 hectáreas, con trazabilidad palma por palma. Sin conservantes, sin intermediarios.</p>
+        <div class="hero-ctas reveal">
+          <a href="#productos" class="btn btn-primary" id="hero-shop-btn">Ver productos</a>
+          <a href="https://wa.me/573000000000?text=Hola%20Guapi%20Coco%2C%20quiero%20hacer%20un%20pedido" target="_blank" rel="noreferrer" class="btn btn-outline" id="hero-wa-btn">Pedir por WhatsApp</a>
+        </div>
+        <div class="hero-stats reveal">
+          <div><strong data-count="421">0</strong><span>Palmas monitoreadas</span></div>
+          <div><strong data-count="4">0</strong><span>Hectáreas propias</span></div>
+          <div><strong data-count="100">0</strong><span>% natural</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section class="perks">
+      <div class="container perks-grid">
+        <div class="perk reveal"><span>🌴</span><div><b>Cosecha propia</b><small>Directo de la finca</small></div></div>
+        <div class="perk reveal"><span>🚚</span><div><b>Entrega en 24h</b><small>Puerto Boyacá y alrededores</small></div></div>
+        <div class="perk reveal"><span>🧪</span><div><b>Sin químicos</b><small>Procesos artesanales</small></div></div>
+        <div class="perk reveal"><span>📍</span><div><b>Trazabilidad</b><small>Cada coco con su palma</small></div></div>
+      </div>
+    </section>
+
+    <!-- Productos -->
+    <section class="section" id="productos">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Nuestra tienda</span>
+          <h2>Productos del coco, hechos con cariño</h2>
+          <p>Elige tus favoritos, agrégalos al carrito y envíanos tu pedido por WhatsApp en un clic.</p>
+        </div>
+        <div class="filters reveal" id="filters">
+          <button class="chip active" data-filter="todos" id="filter-todos">Todos</button>
+          <button class="chip" data-filter="fresco" id="filter-fresco">Fresco</button>
+          <button class="chip" data-filter="bebidas" id="filter-bebidas">Bebidas</button>
+          <button class="chip" data-filter="cocina" id="filter-cocina">Cocina & Cuidado</button>
+          <button class="chip" data-filter="dulces" id="filter-dulces">Dulces</button>
+        </div>
+        <div class="products" id="products-grid"></div>
+      </div>
+    </section>
+
+    <!-- Finca -->
+    <section class="finca section" id="finca">
+      <div class="container finca-grid">
+        <div class="finca-img reveal">
+          <img src="img/finca.jpg" alt="Recolector en el palmar de la finca Guapi Coco al atardecer" loading="lazy" />
+          <div class="finca-badge">
+            <strong>Desde 2018</strong>
+            <span>cultivando en el Magdalena Medio</span>
+          </div>
+        </div>
+        <div class="finca-text reveal">
+          <span class="eyebrow">Nuestra finca</span>
+          <h2>Cuatro hectáreas de palmar, una familia detrás</h2>
+          <p>En Guapi Coco cultivamos variedades <b>Alto del Pacífico</b> e <b>Híbrido PB-121</b> a orillas del río Magdalena. Cada palma está georreferenciada y recibe inspección fitosanitaria periódica, para que solo llegue a tu mesa el mejor coco.</p>
+          <ul class="checks">
+            <li>Monitoreo de salud de cada palma con tecnología GPS</li>
+            <li>Fertilización balanceada y control biológico de plagas</li>
+            <li>Cosecha manual en el punto óptimo de madurez</li>
+            <li>Empleo local para familias de Puerto Boyacá</li>
+          </ul>
+          <a href="#contacto" class="btn btn-primary" id="finca-visit-btn">Agenda una visita a la finca</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Proceso -->
+    <section class="section" id="proceso">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Cómo trabajamos</span>
+          <h2>Del árbol a tu puerta en 4 pasos</h2>
+        </div>
+        <div class="steps">
+          <article class="step reveal"><span class="step-n">01</span><h3>Cultivo</h3><p>Palmas sanas, nutridas y monitoreadas una por una.</p></article>
+          <article class="step reveal"><span class="step-n">02</span><h3>Cosecha</h3><p>Recolección manual en el punto ideal de cada racimo.</p></article>
+          <article class="step reveal"><span class="step-n">03</span><h3>Transformación</h3><p>Prensado en frío y recetas artesanales sin aditivos.</p></article>
+          <article class="step reveal"><span class="step-n">04</span><h3>Entrega</h3><p>Empaque ecológico y despacho el mismo día del pedido.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Testimonios -->
+    <section class="testimonials section">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="eyebrow">Lo que dicen</span>
+          <h2>Clientes que ya prueban la diferencia</h2>
+        </div>
+        <div class="t-grid">
+          <blockquote class="t-card reveal"><p>“El agua de coco sabe a recién bajada de la palma. Ya no compro otra marca.”</p><footer><b>Mariana R.</b><span>Puerto Boyacá</span></footer></blockquote>
+          <blockquote class="t-card reveal"><p>“Uso su aceite virgen en mi restaurante. Calidad constante y entregas puntuales.”</p><footer><b>Chef Andrés P.</b><span>Restaurante La Ribera</span></footer></blockquote>
+          <blockquote class="t-card reveal"><p>“Las cocadas son idénticas a las de mi abuela. Pedir por WhatsApp es facilísimo.”</p><footer><b>Luz Dary M.</b><span>Doradal</span></footer></blockquote>
+        </div>
+      </div>
+    </section>
+
+    <!-- Mayoristas -->
+    <section class="wholesale section" id="mayoristas">
+      <div class="container wholesale-inner reveal">
+        <div>
+          <span class="eyebrow light">Para negocios</span>
+          <h2>¿Tienes un restaurante, hotel o tienda?</h2>
+          <p>Ofrecemos precios mayoristas, despacho programado y factura electrónica para pedidos desde 50 unidades.</p>
+        </div>
+        <a href="https://wa.me/573000000000?text=Hola%2C%20me%20interesan%20precios%20mayoristas" target="_blank" rel="noreferrer" class="btn btn-light" id="wholesale-btn">Solicitar cotización</a>
+      </div>
+    </section>
+
+    <!-- Contacto -->
+    <section class="section" id="contacto">
+      <div class="container contact-grid">
+        <div class="reveal">
+          <span class="eyebrow">Contacto</span>
+          <h2>Hablemos de coco</h2>
+          <p class="muted">Escríbenos y te respondemos en menos de 2 horas en horario laboral.</p>
+          <ul class="contact-list">
+            <li><span>📍</span> Vereda El Marfil, Puerto Boyacá, Boyacá</li>
+            <li><span>📱</span> +57 300 000 0000</li>
+            <li><span>✉️</span> hola@guapicoco.co</li>
+            <li><span>🕒</span> Lun – Sáb · 7:00 a.m. – 6:00 p.m.</li>
+          </ul>
+        </div>
+        <form class="contact-form reveal" id="contact-form">
+          <label>Nombre<input type="text" id="contact-name" required placeholder="Tu nombre" /></label>
+          <label>Correo o celular<input type="text" id="contact-email" required placeholder="Para responderte" /></label>
+          <label>Mensaje<textarea id="contact-message" rows="4" required placeholder="¿En qué te podemos ayudar?"></textarea></label>
+          <button class="btn btn-primary" type="submit" id="contact-submit">Enviar mensaje</button>
+          <p class="form-ok" id="form-ok" hidden>¡Gracias! Te contactaremos muy pronto 🥥</p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div>
+        <a href="#inicio" class="logo light"><span>Guapi<b>Coco</b></span></a>
+        <p>Coco fresco y derivados naturales desde Puerto Boyacá para Colombia.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#productos">Productos</a><a href="#finca">Finca</a><a href="#mayoristas">Mayoristas</a><a href="#contacto">Contacto</a>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <small>© 2026 Guapi Coco. Todos los derechos reservados.</small>
+      <small>Sitio desarrollado por <b>Impulso Digital</b></small>
+    </div>
+  </footer>
+
+  <!-- Carrito -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="cart" id="cart" aria-label="Carrito de compras">
+    <div class="cart-head">
+      <h3>Tu pedido</h3>
+      <button class="icon-btn" id="cart-close-btn" aria-label="Cerrar carrito">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items"></div>
+    <div class="cart-foot">
+      <div class="cart-total"><span>Total</span><strong id="cart-total">$0</strong></div>
+      <button class="btn btn-primary btn-block" id="checkout-btn">Enviar pedido por WhatsApp</button>
+      <small class="muted">Confirmaremos disponibilidad y forma de pago por chat.</small>
+    </div>
+  </aside>
+
+  <div class="toast" id="toast"></div>
+
+  <a class="wa-float" id="wa-float" href="https://wa.me/573000000000" target="_blank" rel="noreferrer" aria-label="WhatsApp">
+    <svg viewBox="0 0 32 32" fill="currentColor"><path d="M16 3a13 13 0 0 0-11.2 19.6L3 29l6.6-1.7A13 13 0 1 0 16 3zm0 23.6a10.6 10.6 0 0 1-5.4-1.5l-.4-.2-3.9 1 1-3.8-.3-.4A10.6 10.6 0 1 1 16 26.6zm5.8-7.9c-.3-.2-1.9-.9-2.2-1s-.5-.2-.7.2-.8 1-1 1.2-.4.2-.7 0a8.7 8.7 0 0 1-4.3-3.8c-.3-.6.3-.5.9-1.7a.6.6 0 0 0 0-.5l-1-2.4c-.3-.6-.5-.5-.7-.5h-.6a1.2 1.2 0 0 0-.9.4 3.7 3.7 0 0 0-1.1 2.7 6.4 6.4 0 0 0 1.3 3.4 14.6 14.6 0 0 0 5.6 5c2.1.9 2.9 1 4 .8a3.3 3.3 0 0 0 2.2-1.5 2.7 2.7 0 0 0 .2-1.5c-.1-.1-.3-.2-.6-.4z"/></svg>
+  </a>
+
+  <script src="app.js"></script>
+</body>
+</html>

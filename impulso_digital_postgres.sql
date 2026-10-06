@@ -488,7 +488,7 @@ SELECT setval(pg_get_serial_sequence('interactions', 'id'), COALESCE((SELECT MAX
 -- Datos para tabla: projects (3 registros)
 INSERT INTO projects (id, company_id, title, package, status, progress_percent, staging_url, production_url, target_delivery_date, created_at, updated_at) VALUES (1, 1, 'Sitio Web E-commerce y Pedidos por WhatsApp', 'impulso_integral', 'staging', 85, 'https://laespiga.staging.impulsodigital.co', 'https://laespiga.co', NULL, '2026-10-04 22:05:59.218564', '2026-10-05 21:14:09.131753');
 INSERT INTO projects (id, company_id, title, package, status, progress_percent, staging_url, production_url, target_delivery_date, created_at, updated_at) VALUES (2, 13, 'EL DIALOGO', 'impulso_integral', 'kickoff', 5, '', NULL, NULL, '2026-10-05 19:20:44.035022', '2026-10-05 19:20:44.035022');
-INSERT INTO projects (id, company_id, title, package, status, progress_percent, staging_url, production_url, target_delivery_date, created_at, updated_at) VALUES (3, 12, 'Sistema de Georreferenciación, Censo y Fitosanidad de Palma de Coco (Finca 4 Ha)', 'impulso_integral', 'staging', 85, '/guapicoco', 'https://guapicoco.co', NULL, '2026-10-05 21:14:09.135750', '2026-10-05 21:14:09.135750');
+INSERT INTO projects (id, company_id, title, package, status, progress_percent, staging_url, production_url, target_delivery_date, created_at, updated_at) VALUES (3, 12, 'Sistema de Georreferenciación, Censo y Fitosanidad de Palma de Coco (Finca 4 Ha)', 'impulso_integral', 'staging', 85, '/guapicoco', '/sitios/guapicoco/index.html', NULL, '2026-10-05 21:14:09.135750', '2026-10-05 21:14:09.135750');
 SELECT setval(pg_get_serial_sequence('projects', 'id'), COALESCE((SELECT MAX(id) FROM projects), 1), true);
 
 -- Datos para tabla: deliverables (6 registros)
